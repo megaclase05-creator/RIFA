@@ -33,7 +33,7 @@
 <body>
     <div class="container">
         <div class="promo-card">
-            <h2>Premio: Aire Aconditioned Portátil</h2>
+            <h2>Premio: Aire Acondicionado Portátil</h2>
             <p>Valor comercial: <strong>$1.100.000 COP</strong></p>
             <div class="info-grid">
                 <div class="info-item">🎟️ Número: $5.000</div>
@@ -101,46 +101,49 @@
                     let fila = lineas[i].trim();
                     if (!fila) continue;
                     
-                    fila = fila.replace(/"/g, '');
+                    // Limpieza absoluta de comillas y espacios ocultos
+                    fila = fila.replace(/"/g, '').trim();
                     
-                    // MODIFICADO: Soporta tanto comas (,) como puntos y comas (;) de forma segura
-                    const columnas = fila.indexOf(';') !== -1 ? fila.split(';') : fila.split(',');
+                    // LECTURA DIRECTA POR CORTE DE TEXTO (Indestructible)
+                    // Buscamos los primeros 3 caracteres numéricos de la línea
+                    const matchNumero = fila.match(/\d{3}/);
+                    if (!matchNumero) continue;
                     
-                    if (columnas.length >= 2) {
-                        const numLimpio = String(columnas[0]).trim().padStart(3, '0');
-                        const estadoLimpio = String(columnas[1]).trim();
-                        
-                        if (isNaN(numLimpio) || parseInt(numLimpio) > 999 || numLimpio === "") continue;
-                        
-                        const box = document.createElement('div');
-                        box.classList.add('num-box', estadoLimpio);
-                        box.innerText = numLimpio;
-                        
-                        if (estadoLimpio === 'Disponible') {
-                            box.addEventListener('click', () => {
-                                if (box.classList.contains('selected')) {
-                                    box.classList.remove('selected');
-                                    seleccionados = seleccionados.filter(n => n !== numLimpio);
-                                } else {
-                                    box.classList.add('selected');
-                                    seleccionados.push(numLimpio);
-                                }
-                                var cant = seleccionados.length;
-                                var tot = 0;
-                                if(cant==1) tot=5000;
-                                else if(cant==2) tot=9000;
-                                else if(cant==3) tot=13500;
-                                else if(cant==4 || cant==5) tot=20000;
-                                else if(cant>5) {
-                                    tot = (Math.floor(cant/5)*20000) + ((cant%5==1?4500:cant%5==2?9000:cant%5==3?13500:cant%5==4?20000:0));
-                                }
-                                document.getElementById('lbl-seleccionados').innerText = cant > 0 ? seleccionados.join(', ') : 'Ninguno';
-                                document.getElementById('lbl-total').innerText = '$' + tot.toLocaleString('es-CO') + ' COP';
-                                document.getElementById('btn-enviar').disabled = cant === 0;
-                            });
-                        }
-                        grid.appendChild(box);
+                    const numLimpio = matchNumero[0];
+                    
+                    // El estado será lo que quede en la línea después del número
+                    let estadoLimpio = "Disponible";
+                    if (fila.includes("Reservado")) estadoLimpio = "Reservado";
+                    else if (fila.includes("Vendido")) estadoLimpio = "Vendido";
+                    
+                    const box = document.createElement('div');
+                    box.classList.add('num-box', estadoLimpio);
+                    box.innerText = numLimpio;
+                    
+                    if (estadoLimpio === 'Disponible') {
+                        box.addEventListener('click', () => {
+                            if (box.classList.contains('selected')) {
+                                box.classList.remove('selected');
+                                seleccionados = seleccionados.filter(n => n !== numLimpio);
+                            } else {
+                                box.classList.add('selected');
+                                seleccionados.push(numLimpio);
+                            }
+                            var cant = seleccionados.length;
+                            var tot = 0;
+                            if(cant==1) tot=5000;
+                            else if(cant==2) tot=9000;
+                            else if(cant==3) tot=13500;
+                            else if(cant==4 || cant==5) tot=20000;
+                            else if(cant>5) {
+                                tot = (Math.floor(cant/5)*20000) + ((cant%5==1?4500:cant%5==2?9000:cant%5==3?13500:cant%5==4?20000:0));
+                            }
+                            document.getElementById('lbl-seleccionados').innerText = cant > 0 ? seleccionados.join(', ') : 'Ninguno';
+                            document.getElementById('lbl-total').innerText = '$' + tot.toLocaleString('es-CO') + ' COP';
+                            document.getElementById('btn-enviar').disabled = cant === 0;
+                        });
                     }
+                    grid.appendChild(box);
                 }
             } catch (e) { 
                 document.getElementById('grid-numeros').innerText = 'Error al enlazar la base de datos.'; 
@@ -163,5 +166,3 @@
                 await fetch(FORM_URL, { 
                     method: 'POST',
                     mode: 'no-cors',
-                    body: JSON.stringify(payload) 
-                });
