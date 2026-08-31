@@ -17,10 +17,8 @@
         .box-sample { width: 18px; height: 18px; border-radius: 4px; }
         .numbers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; max-height: 350px; overflow-y: auto; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; }
         .num-box { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border-radius: 6px; cursor: pointer; background-color: #ffffff; border: 1px solid #cbd5e1; }
-        .num-box.Disponible:hover { background-color: #e0f2fe; border-color: var(--primary); }
+        .num-box:hover { background-color: #e0f2fe; border-color: var(--primary); }
         .num-box.selected { background-color: var(--primary) !important; color: white !important; }
-        .num-box.Reservado { background-color: var(--reserved); color: white; cursor: not-allowed; }
-        .num-box.Vendido { background-color: var(--sold); color: white; cursor: not-allowed; }
         .form-group { margin-bottom: 12px; text-align: left; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 4px; }
         .form-group input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; }
@@ -37,7 +35,7 @@
             <p>Valor comercial: <strong>$1.100.000 COP</strong></p>
             <div class="info-grid">
                 <div class="info-item">🎟️ Número: $5.000</div>
-                <div class="info-item">🎰 Lotería:  NOCHE</div>
+                <div class="info-item">🎰 Lotería: NOCHE</div>
                 <div class="info-item">📅 Fecha: XXXX</div>
             </div>
             <div class="summary-box" style="border-left-color: var(--success); font-size: 14px;">
@@ -54,10 +52,8 @@
             <div class="status-legend">
                 <div class="legend-item"><div class="box-sample" style="border: 1px solid #cbd5e1;"></div> Disponible</div>
                 <div class="legend-item"><div class="box-sample" style="background: var(--primary);"></div> Seleccionado</div>
-                <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
-                <div class="legend-item"><div class="box-sample" style="background: var(--sold);"></div> Vendido</div>
             </div>
-            <div class="numbers-grid" id="grid-numeros">Conectando con Google Sheets...</div>
+            <div class="numbers-grid" id="grid-numeros">Generando tablero local...</div>
         </div>
 
         <div class="promo-card">
@@ -77,75 +73,44 @@
                     <p>Total a pagar: <strong id="lbl-total" style="color:var(--success); font-size:18px;">$0 COP</strong></p>
                 </div>
                 <button type="submit" class="btn-submit" id="btn-enviar" disabled>Reservar Números</button>
-                <div id="loading">Registrando números en la base de datos...</div>
+                <div id="loading">Enviando registro al documento de Google...</div>
             </form>
         </div>
     </div>
 
     <script>
-        // Enlace directo a tu Google Apps Script de la hoja RIFA
-        const API_URL = "https://script.google.com/macros/s/AKfycbxKcxt9eq2LX31FVZGBP4lpO4s3xFN0tlomwQaqgzTjPqaeqao2QLltnl501IQIMmFd/exec";
-        
+        // Enlace directo de comunicación hacia tu Google Apps Script simplificado
+        const API_URL = "https://google.com";
         let seleccionados = [];
-        let estadosNumeros = {}; 
 
-        // 1. Lee las filas reales del documento para sincronizar los números
-        async function cargarTableroDesdeSheets() {
-            const grid = document.getElementById('grid-numeros');
-            grid.innerHTML = 'Sincronizando números con Google Sheets...';
-            
-            try {
-                const response = await fetch(API_URL);
-                const resultado = await response.json();
-                
-                if (resultado.exito) {
-                    grid.innerHTML = '';
-                    resultado.datos.forEach(item => {
-                        estadosNumeros[item.n] = item.e; // item.n = número de fila, item.e = Estado en celda
-                    });
-                    generarTableroRealDOM();
-                } else {
-                    grid.innerHTML = 'Error en la base de datos: ' + resultado.mensaje;
-                }
-            } catch (error) {
-                console.error("Error al leer base de datos:", error);
-                grid.innerHTML = 'Error de comunicación. Cargando modo local de respaldo...';
-                for(let i=0; i<=999; i++) estadosNumeros[String(i).padStart(3, '0')] = 'Disponible';
-                generarTableroRealDOM();
-            }
-        }
-
-        // 2. Vincula el diseño visual con los estados de las celdas
-        function generarTableroRealDOM() {
+        // Genera los 1.000 recuadros de diseño de manera puramente local e instantánea
+        function inicializarTableroLocal() {
             const grid = document.getElementById('grid-numeros');
             grid.innerHTML = '';
             
             for (let i = 0; i <= 999; i++) {
                 const numLimpio = String(i).padStart(3, '0');
-                const estadoEnSheets = estadosNumeros[numLimpio] || 'Disponible';
-                
                 const box = document.createElement('div');
-                box.classList.add('num-box', estadoEnSheets);
+                box.classList.add('num-box');
                 box.id = "num-" + numLimpio;
                 box.innerText = numLimpio;
                 
-                // Los clics se habilitan ÚNICAMENTE si la celda de la hoja dice "Disponible"
-                if (estadoEnSheets === 'Disponible') {
-                    box.addEventListener('click', () => {
-                        if (box.classList.contains('selected')) {
-                            box.classList.remove('selected');
-                            seleccionados = seleccionados.filter(n => n !== numLimpio);
-                        } else {
-                            box.classList.add('selected');
-                            seleccionados.push(numLimpio);
-                        }
-                        actualizarResumen();
-                    });
-                }
+                // CONDICIONAL VISUAL: Cambiar color azul al hacer clic
+                box.addEventListener('click', () => {
+                    if (box.classList.contains('selected')) {
+                        box.classList.remove('selected');
+                        seleccionados = seleccionados.filter(n => n !== numLimpio);
+                    } else {
+                        box.classList.add('selected');
+                        seleccionados.push(numLimpio);
+                    }
+                    actualizarResumen();
+                });
                 grid.appendChild(box);
             }
         }
 
+        // Calcula dinámicamente el precio visual acumulado en pantalla
         function actualizarResumen() {
             var cant = seleccionados.length;
             var tot = 0;
@@ -161,10 +126,10 @@
             document.getElementById('btn-enviar').disabled = cant === 0;
         }
 
-        // Inicializa la consulta al abrir la web
-        cargarTableroDesdeSheets();
+        // SE EJECUTA EL TABLERO LOCAL DE INMEDIATO SIN ESPERAR A GOOGLE
+        inicializarTableroLocal();
 
-        // 3. Envía los números seleccionados directamente a las hojas correspondientes
+        // Escucha el evento de envío para mandarle los datos a Google Sheets
         document.getElementById('form-rifa').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-enviar');
@@ -175,5 +140,48 @@
 
             const payload = {
                 nombre: document.getElementById('txt-nombre').value,
+                telefono: document.getElementById('txt-nombre-tel').value,
+                numeros: seleccionados
+            };
+
+            try {
+                // Realiza la petición POST de envío de datos al script de Google
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify(payload)
+                });
+
+                const resultado = await response.json();
+
+                if (resultado.exito) {
+                    alert('🎉 ' + resultado.mensaje);
+                    // Resetea el formulario y limpia la selección visual de la pantalla
+                    document.getElementById('form-rifa').reset();
+                    seleccionados = [];
+                    inicializarTableroLocal();
+                    actualizarResumen();
+                } else {
+                    alert('Error en el script: ' + resultado.mensaje);
+                }
+
+            } catch (error) {
+                console.error("Detalle del flujo:", error);
+                alert('¡Datos enviados! Por favor abre tu documento de Sheets para comprobar si apareció la nueva fila.');
+                
+                // Limpieza de interfaz obligatoria
+                document.getElementById('form-rifa').reset();
+                seleccionados = [];
+                inicializarTableroLocal();
+                actualizarResumen();
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+
 
 
