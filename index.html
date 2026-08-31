@@ -17,8 +17,9 @@
         .box-sample { width: 18px; height: 18px; border-radius: 4px; }
         .numbers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; max-height: 350px; overflow-y: auto; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; }
         .num-box { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border-radius: 6px; cursor: pointer; background-color: #ffffff; border: 1px solid #cbd5e1; }
-        .num-box:hover { background-color: #e0f2fe; border-color: var(--primary); }
+        .num-box.Disponible:hover { background-color: #e0f2fe; border-color: var(--primary); }
         .num-box.selected { background-color: var(--primary) !important; color: white !important; }
+        .num-box.Reservado { background-color: var(--reserved) !important; color: white !important; cursor: not-allowed; }
         .form-group { margin-bottom: 12px; text-align: left; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 4px; }
         .form-group input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; }
@@ -51,70 +52,90 @@
             <div class="status-legend">
                 <div class="legend-item"><div class="box-sample" style="border: 1px solid #cbd5e1;"></div> Disponible</div>
                 <div class="legend-item"><div class="box-sample" style="background: var(--primary);"></div> Seleccionado</div>
+                <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
             </div>
-            <div class="numbers-grid" id="grid-numeros">Generando tablero...</div>
+            <div class="numbers-grid" id="grid-numeros">Sincronizando bloqueos con Google...</div>
         </div>
 
         <div class="promo-card">
             <h3>2. Datos de Registro</h3>
             <br>
-            <!-- Formulario directo apuntando a tu nueva URL segura de la rifa -->
-            <form action="https://script.google.com/macros/s/AKfycbzU8-8TeD4Y4khnmxm8ZUjZaCGj6dE-DyScXYCoPmssSuq9mVK9yQ3ly3NC4-bQlO33/exec" method="POST" id="form-rifa">
-                
+            <form action="https://google.com" method="POST" id="form-rifa">
                 <div class="form-group">
                     <label>Nombre Completo:</label>
                     <input type="text" name="nombreCliente" required placeholder="Ej. Juan Pérez">
                 </div>
-                
                 <div class="form-group">
                     <label>WhatsApp / Teléfono:</label>
                     <input type="tel" name="telefonoCliente" required placeholder="Ej. 3001234567">
                 </div>
-                
-                <!-- CAMPO OCULTO: Envía la lista de números seleccionados a Google -->
                 <input type="hidden" name="numerosSeleccionados" id="txt-oculto-numeros" value="">
-
                 <div class="summary-box">
                     <p>Elegidos: <span id="lbl-seleccionados">Ninguno</span></p>
                     <p>Total a pagar: <strong id="lbl-total" style="color:var(--success); font-size:18px;">$0 COP</strong></p>
                 </div>
-                
                 <input type="submit" id="btn-enviar" value="Reservar Números" disabled>
             </form>
         </div>
     </div>
 
     <script>
+        const API_URL = "https://google.com";
         let seleccionados = [];
+        let listaReservados = [];
 
-        // Genera los 1.000 recuadros locales instantáneamente
+        // ESTRATEGIA ANTIBLOQUEO: Llama a Google Sheets usando la técnica segura JSONP
+        function consultarReservadosDesdeSheets() {
+            const scriptElement = document.createElement('script');
+            // Le pedimos a Google que empaquete la respuesta en nuestra función procesarDatos
+            scriptElement.src = API_URL + "?callback=procesarDatos";
+            document.body.appendChild(scriptElement);
+        }
+
+        // Esta función procesa la respuesta segura recibida de tu documento
+        function procesarDatos(resultado) {
+            if (resultado.exito) {
+                listaReservados = resultado.reservados; // Guarda el arreglo de números ya registrados
+            }
+            // Una vez que tenemos la lista real, dibujamos los 1.000 cuadros en pantalla
+            inicializarTablero();
+        }
+
         function inicializarTablero() {
             const grid = document.getElementById('grid-numeros');
             grid.innerHTML = '';
             
             for (let i = 0; i <= 999; i++) {
                 const numLimpio = String(i).padStart(3, '0');
+                
+                // CONDICIONAL DE CONEXIÓN: Revisa si el número ya existe en tu Google Sheets
+                const yaEstaReservado = listaReservados.includes(numLimpio);
+                
                 const box = document.createElement('div');
-                box.classList.add('num-box');
                 box.id = "num-" + numLimpio;
                 box.innerText = numLimpio;
                 
-                // CONDICIONAL: Cambiar color visual de selección
-                box.addEventListener('click', () => {
-                    if (box.classList.contains('selected')) {
-                        box.classList.remove('selected');
-                        seleccionados = seleccionados.filter(n => n !== numLimpio);
-                    } else {
-                        box.classList.add('selected');
-                        seleccionados.push(numLimpio);
-                    }
-                    actualizarResumen();
-                });
+                if (yaEstaReservado) {
+                    // Si ya existe en la hoja, lo pinta de amarillo y bloquea clics
+                    box.classList.add('num-box', 'Reservado');
+                } else {
+                    // Si está libre, permite interactuar normalmente
+                    box.classList.add('num-box', 'Disponible');
+                    box.addEventListener('click', () => {
+                        if (box.classList.contains('selected')) {
+                            box.classList.remove('selected');
+                            seleccionados = seleccionados.filter(n => n !== numLimpio);
+                        } else {
+                            box.classList.add('selected');
+                            seleccionados.push(numLimpio);
+                        }
+                        actualizarResumen();
+                    });
+                }
                 grid.appendChild(box);
             }
         }
 
-        // Calcula dinámicamente los precios según tus combos en la pantalla
         function actualizarResumen() {
             var cant = seleccionados.length;
             var tot = 0;
@@ -125,23 +146,14 @@
             else if(cant>5) {
                 tot = (Math.floor(cant/5)*20000) + ((cant%5==1?4500:cant%5==2?9000:cant%5==3?13500:cant%5==4?20000:0));
             }
-            
-            // Sincroniza la lista de números con el input que viaja a Google
             document.getElementById('txt-oculto-numeros').value = seleccionados.join(', ');
-            
             document.getElementById('lbl-seleccionados').innerText = cant > 0 ? seleccionados.join(', ') : 'Ninguno';
             document.getElementById('lbl-total').innerText = '$' + tot.toLocaleString('es-CO') + ' COP';
             document.getElementById('btn-enviar').disabled = cant === 0;
         }
 
-        // Corre el script de inicio
-        inicializarTablero();
+        // Lanza la sincronización segura al abrir la página web
+        consultarReservadosDesdeSheets();
     </script>
 </body>
 </html>
-
-
-
-
-
-
