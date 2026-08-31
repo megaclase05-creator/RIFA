@@ -54,13 +54,12 @@
                 <div class="legend-item"><div class="box-sample" style="background: var(--primary);"></div> Seleccionado</div>
                 <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
             </div>
-            <div class="numbers-grid" id="grid-numeros">Generando tablero...</div>
+            <div class="numbers-grid" id="grid-numeros">Sincronizando números con Google Sheets...</div>
         </div>
 
         <div class="promo-card">
             <h3>2. Datos de Registro</h3>
             <br>
-            <!-- Formulario Directo e Inmune a Bloqueos -->
             <form action="https://google.com" method="POST" id="form-rifa">
                 <div class="form-group">
                     <label>Nombre Completo:</label>
@@ -81,13 +80,44 @@
     </div>
 
     <script>
-        // ========================================================
-        // CONTROL DE NÚMEROS APARTADOS (ESCRIBELOS AQUÍ ADENTRO)
-        // ========================================================
-        // Ejemplo: const LISTA_DE_RESERVADOS = ["005", "024", "150", "999"];
-        const LISTA_DE_RESERVADOS = [];
+        // ID de tu documento real
+        const SPREADSHEET_ID = "1VFyjvJdifKYC3ZjToyYEHAVNz7KidmbQOF6XzcUuY2M";
+        // Lector de Google apuntando a las columnas A y B de tu pestaña RESERVADOS
+        const VISUAL_READER_URL = `https://google.com{SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=RESERVADOS&range=A2:B1001`;
 
         let seleccionados = [];
+        let listaReservados = [];
+
+        // Lee la tabla tal cual se ve en tu imagen
+        async function cargarEstadosDesdeSheets() {
+            try {
+                const response = await fetch(VISUAL_READER_URL);
+                const text = await response.text();
+                
+                // Limpieza de formato JSON de Google
+                const jsonText = text.substring(47, text.length - 2);
+                const data = JSON.parse(jsonText);
+                
+                if (data.table && data.table.rows) {
+                    data.table.rows.forEach(row => {
+                        if (row.c && row.c[0] && row.c[1]) {
+                            let numeroStr = String(row.c[0].v).trim().padStart(3, '0'); // Columna A (Número)
+                            let estadoStr = String(row.c[1].v).trim();                  // Columna B (Reservado / Disponible)
+                            
+                            // Si tu fórmula marcó la celda como "Reservado", lo guardamos para bloquearlo
+                            if (estadoStr === "Reservado") {
+                                listaReservados.push(numeroStr);
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Aviso en sincronización:", error);
+            } finally {
+                // Al terminar de evaluar tu tabla, dibuja los botones
+                inicializarTablero();
+            }
+        }
 
         function inicializarTablero() {
             const grid = document.getElementById('grid-numeros');
@@ -95,17 +125,18 @@
             
             for (let i = 0; i <= 999; i++) {
                 const numLimpio = String(i).padStart(3, '0');
-                
-                // Verifica si el número está en tu lista manual de bloqueos
-                const yaEstaReservado = LISTA_DE_RESERVADOS.includes(numLimpio);
+                // Buscamos si el número quedó guardado como bloqueado en el paso anterior
+                const yaEstaReservado = listaReservados.includes(numLimpio);
                 
                 const box = document.createElement('div');
                 box.id = "num-" + numLimpio;
                 box.innerText = numLimpio;
                 
                 if (yaEstaReservado) {
+                    // Si tu fórmula de Sheets dice Reservado, lo pintamos de amarillo
                     box.classList.add('num-box', 'Reservado');
                 } else {
+                    // Si está disponible, permitimos la selección normal
                     box.classList.add('num-box', 'Disponible');
                     box.addEventListener('click', () => {
                         if (box.classList.contains('selected')) {
@@ -138,8 +169,9 @@
             document.getElementById('btn-enviar').disabled = cant === 0;
         }
 
-        // Dibuja el tablero al cargar la página
-        inicializarTablero();
+        // Lanza la sincronización al abrir el sitio
+        cargarEstadosDesdeSheets();
     </script>
 </body>
 </html>
+
