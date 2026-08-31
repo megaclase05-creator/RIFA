@@ -14,7 +14,7 @@
         .info-item { background: #f1f5f9; padding: 10px; border-radius: 8px; font-weight: bold; }
         .numbers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; max-height: 350px; overflow-y: auto; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; }
         .num-box { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border-radius: 6px; cursor: pointer; background-color: #ffffff; border: 1px solid #cbd5e1; color: var(--text); }
-        .num-box:hover { background-color: #e0f2fe; border-color: var(--primary); }
+        .num-box.Disponible:hover { background-color: #e0f2fe; border-color: var(--primary); }
         .num-box.selected { background-color: var(--primary) !important; color: white !important; }
         .form-group { margin-bottom: 12px; text-align: left; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 4px; }
@@ -66,7 +66,7 @@
                     <input type="tel" name="telefonoCliente" required placeholder="Ej. 3001234567">
                 </div>
                 
-                <!-- Campo oculto que recolecta los números seleccionados para el mensaje -->
+                <!-- Campo oculto que recolecta los números seleccionados -->
                 <input type="hidden" name="numerosSeleccionados" id="txt-oculto-numeros" value="">
                 
                 <div class="summary-box">
@@ -79,60 +79,60 @@
     </div>
 
     <script>
-        // Tu ID de documento real extraído de tu hoja de cálculo
-        const SPREADSHEET_ID = "1VFyjvJdifKYC3ZjToyYEHAVNz7KidmbQOF6XzcUuY2M";
-        
-        // El visor público oficial estructurado para consultar la pestaña RESERVADOS
-        const VISUAL_READER_URL = `https://google.com{SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=RESERVADOS`;
+        // TU ENLACE REAL Y DIRECTO DE PUBLICACIÓN WEB SOLICITADO
+        const VISUAL_READER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkAwPXBPYVqxtNZXZp9zjV3kZACDetCAkooTHLq6NefoAC6KWqQ9m51JAXA75KRf060x-bZwxQB1NX/pubhtml?gid=878937276&single=true";
 
         let seleccionados = [];
         let listaNumerosLibres = []; 
 
-        // FUNCIÓN MAESTRA: Consulta tu Excel público de forma segura e inmune a bloqueos
+        // FUNCIÓN MAESTRA: Extrae las celdas del HTML publicado nativamente por Google
         async function consultarNumerosDesdeExcel() {
             try {
-                const response = await fetch(VISUAL_READER_URL);
-                const text = await response.text();
+                // Al ser una URL pubhtml nativa externa, usamos un proxy cors proxy libre estándar para poder leer el HTML de la tabla de forma limpia
+                const proxyUrl = "https://allorigins.win" + encodeURIComponent(VISUAL_READER_URL);
+                const response = await fetch(proxyUrl);
+                const json = await response.json();
                 
-                // Limpiamos el texto plano de Google para convertirlo en JSON legible
-                const jsonText = text.substring(47, text.length - 2);
-                const data = JSON.parse(jsonText);
+                // Cargamos el código HTML puro de la tabla devuelta por Google Sheets
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(json.contents, "text/html");
                 
-                if (data.table && data.table.rows) {
-                    data.table.rows.forEach(row => {
-                        // Leemos la columna A de tu pestaña RESERVADOS (donde están tus números listados)
-                        if (row.c && row.c && row.c.v !== null) {
-                            let numExtraido = String(row.c.v).trim().padStart(3, '0');
-                            
-                            // Lo agregamos a la lista de opciones válidas para la página web
-                            if (!listaNumerosLibres.includes(numExtraido)) {
-                                listaNumerosLibres.push(numExtraido);
-                            }
+                // Buscamos todas las celdas de la tabla (etiquetas <td>)
+                const celdas = doc.querySelectorAll("td");
+                
+                celdas.forEach(celda => {
+                    let textoCelda = celda.innerText ? celda.innerText.trim() : "";
+                    
+                    // Si la celda contiene un número válido, lo agregamos a las opciones de la cuadrícula
+                    if (textoCelda !== "" && !isNaN(textoCelda) && textoCelda.length <= 4) {
+                        let numFormateado = textoCelda.padStart(3, '0');
+                        if (!listaNumerosLibres.includes(numFormateado)) {
+                            listaNumerosLibres.push(numFormateado);
                         }
-                    });
-                }
+                    }
+                });
             } catch (error) {
-                console.error("Aviso en lectura de Excel:", error);
+                console.error("Aviso en lectura de HTML de Excel:", error);
             } finally {
-                // Una vez que leyó tu Excel real, dibuja los botones interactivos en pantalla
+                // Una vez evaluada tu tabla real, dibuja los botones interactivos en pantalla
                 generarTableroInteractivo();
             }
         }
 
-        // DIBUJA LOS BOTONES: Solo crea cuadros interactivos para los números que estén en tu Excel
+        // DIBUJA LOS BOTONES: Solo crea cuadros interactivos para los números que existan en tu hoja pubhtml
         function generarTableroInteractivo() {
             const grid = document.getElementById('grid-numeros');
             grid.innerHTML = '';
             
             if (listaNumerosLibres.length === 0) {
-                grid.innerHTML = '<p style="padding:20px; font-weight:bold; color:var(--sold);">Sincronizando o tablero sin números disponibles.</p>';
+                grid.innerHTML = '<p style="padding:20px; font-weight:bold; color:var(--text);">Cargando números libres o el tablero se encuentra vacío...</p>';
                 return;
             }
 
-            // Ordenamos la lista numéricamente para que se vea estético
+            // Ordenamos la lista numéricamente para mantener la estética
             listaNumerosLibres.sort();
 
-            // Recorremos únicamente la lista de números que tu Excel nos entregó
+            // Recorremos la lista de números que tu Excel entregó como disponibles
             listaNumerosLibres.forEach(numLimpio => {
                 const box = document.createElement('div');
                 box.classList.add('num-box');
@@ -171,7 +171,3 @@
         }
 
         // Lanza la lectura automática de tu documento al cargar la web
-        consultarNumerosDesdeExcel();
-    </script>
-</body>
-</html>
