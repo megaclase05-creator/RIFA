@@ -35,7 +35,7 @@
             <p>Valor comercial: <strong>$1.100.000 COP</strong></p>
             <div class="info-grid">
                 <div class="info-item">🎟️ Número: $5.000</div>
-                <div class="info-item">🎰 Lotería: l</div>
+                <div class="info-item">🎰 Lotería: NOCHE</div>
                 <div class="info-item">📅 Fecha: XXXX</div>
             </div>
             <div class="summary-box" style="border-left-color: var(--success); font-size: 14px;">
@@ -54,7 +54,7 @@
                 <div class="legend-item"><div class="box-sample" style="background: var(--primary);"></div> Seleccionado</div>
                 <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
             </div>
-            <div class="numbers-grid" id="grid-numeros">Generando tablero...</div>
+            <div class="numbers-grid" id="grid-numeros">Sincronizando base de datos...</div>
         </div>
 
         <div class="promo-card">
@@ -80,14 +80,39 @@
     </div>
 
     <script>
-        // =================================================================
-        // 🔒 LISTA MAESTRA DE NÚMEROS CONFIRMADOS POR EL ADMINISTRADOR
-        // =================================================================
-        // Cuando verifiques un pago, escríbelo aquí adentro entre comillas y separado por comas.
-        // Ejemplo: const LISTA_DE_RESERVADOS = ["005", "012", "540", "999"];
-        const LISTA_DE_RESERVADOS = ["000", "001", "002", "003", "004", "008", "009"];
+        // PEGA AQUÍ EL ENLACE .CSV QUE TE DIÓ GOOGLE EN EL PASO 1
+        const URL_CSV_PUBLICO = "AQUÍ_PEGA_EL_ENLACE_CSV_QUE_COPIASTE";
 
         let seleccionados = [];
+        let listaReservados = [];
+
+        // Lee el archivo CSV de Google, el cual es inmune a bloqueos CORS
+        async function cargarBloqueosDesdeCSV() {
+            try {
+                const response = await fetch(URL_CSV_PUBLICO);
+                const textoPlano = await response.text();
+                
+                // Dividimos el texto plano fila por fila
+                const filas = textoPlano.split("\n");
+                
+                for (let i = 1; i < filas.length; i++) {
+                    const columnas = filas[i].split(",");
+                    if (columnas.length >= 2) {
+                        let numeroStr = columnas[0].replace(/"/g, "").trim().padStart(3, '0'); // Columna A
+                        let estadoStr = columnas[1].replace(/"/g, "").trim();                  // Columna B
+                        
+                        // Si tu fórmula marcó la fila como Reservado, bloqueamos el número
+                        if (estadoStr === "Reservado") {
+                            listaReservados.push(numeroStr);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Aviso en sincronización:", error);
+            } finally {
+                inicializarTablero();
+            }
+        }
 
         function inicializarTablero() {
             const grid = document.getElementById('grid-numeros');
@@ -95,16 +120,16 @@
             
             for (let i = 0; i <= 999; i++) {
                 const numLimpio = String(i).padStart(3, '0');
-                const yaEstaReservado = LISTA_DE_RESERVADOS.includes(numLimpio);
+                const yaEstaReservado = listaReservados.includes(numLimpio);
                 
                 const box = document.createElement('div');
                 box.id = "num-" + numLimpio;
                 box.innerText = numLimpio;
                 
                 if (yaEstaReservado) {
-                    box.className = 'num-box Reservado';
+                    box.classList.add('num-box', 'Reservado');
                 } else {
-                    box.className = 'num-box Disponible';
+                    box.classList.add('num-box', 'Disponible');
                     box.addEventListener('click', () => {
                         if (box.classList.contains('selected')) {
                             box.classList.remove('selected');
@@ -136,7 +161,7 @@
             document.getElementById('btn-enviar').disabled = cant === 0;
         }
 
-        inicializarTablero();
+        cargarBloqueosDesdeCSV();
     </script>
 </body>
 </html>
