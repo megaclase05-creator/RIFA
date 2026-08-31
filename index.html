@@ -24,7 +24,7 @@
         .form-group label { display: block; font-weight: 600; margin-bottom: 4px; }
         .form-group input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; }
         .summary-box { background: #f8fafc; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 4px solid var(--primary); text-align: left; }
-        input[type="submit"] { width: 100%; background-color: var(--success); color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        input[type="submit"] { width: 100%; background-color: var(--success); color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; }
         input[type="submit"]:disabled { background-color: #cbd5e1 !important; cursor: not-allowed; }
     </style>
 </head>
@@ -35,7 +35,7 @@
             <p>Valor comercial: <strong>$1.100.000 COP</strong></p>
             <div class="info-grid">
                 <div class="info-item">🎟️ Número: $5.000</div>
-                <div class="info-item">🎰 Lotería: NOCHE</div>
+                <div class="info-item">🎰 Lotería: l</div>
                 <div class="info-item">📅 Fecha: XXXX</div>
             </div>
             <div class="summary-box" style="border-left-color: var(--success); font-size: 14px;">
@@ -54,7 +54,7 @@
                 <div class="legend-item"><div class="box-sample" style="background: var(--primary);"></div> Seleccionado</div>
                 <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
             </div>
-            <div class="numbers-grid" id="grid-numeros">Sincronizando números con Google Sheets...</div>
+            <div class="numbers-grid" id="grid-numeros">Generando tablero...</div>
         </div>
 
         <div class="promo-card">
@@ -80,67 +80,31 @@
     </div>
 
     <script>
-        const SPREADSHEET_ID = "1VFyjvJdifKYC3ZjToyYEHAVNz7KidmbQOF6XzcUuY2M";
-        // Consultamos la tabla pública de la hoja RESERVADOS
-        const VISUAL_READER_URL = `https://google.com{SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=RESERVADOS`;
+        // =================================================================
+        // 🔒 LISTA MAESTRA DE NÚMEROS CONFIRMADOS POR EL ADMINISTRADOR
+        // =================================================================
+        // Cuando verifiques un pago, escríbelo aquí adentro entre comillas y separado por comas.
+        // Ejemplo: const LISTA_DE_RESERVADOS = ["005", "012", "540", "999"];
+        const LISTA_DE_RESERVADOS = ["000", "001", "002", "003", "004", "008", "009"];
 
         let seleccionados = [];
-        let listaReservados = [];
 
-        // Lee los estados de la pestaña RESERVADOS de forma pública
-        async function cargarEstadosDesdeSheets() {
-            try {
-                const response = await fetch(VISUAL_READER_URL);
-                const text = await response.text();
-                
-                // Extrae el JSON puro limpiando el envoltorio de Google
-                const jsonText = text.substring(47, text.length - 2);
-                const data = JSON.parse(jsonText);
-                
-                if (data.table && data.table.rows) {
-                    data.table.rows.forEach(row => {
-                        // Verificación corregida: Lee de forma segura las columnas A y B de cada fila
-                        if (row.c && row.c[0] && row.c[1]) {
-                            let valorColumnaA = row.c[0].v;
-                            let valorColumnaB = row.c[1].v;
-                            
-                            if (valorColumnaA !== null && valorColumnaB !== null) {
-                                let numeroStr = String(valorColumnaA).trim().padStart(3, '0');
-                                let estadoStr = String(valorColumnaB).trim();
-                                
-                                // Si tu fórmula marcó la columna B como Reservado, guardamos el número para bloquearlo
-                                if (estadoStr === "Reservado") {
-                                    listaReservados.push(numeroStr);
-                                }
-                            }
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error("Aviso en sincronización:", error);
-            } finally {
-                // Al terminar de procesar las celdas de la hoja, dibuja el tablero
-                inicializarTablero();
-            }
-        }
-
-        // Genera los 1.000 cuadros vinculando los estados reales
         function inicializarTablero() {
             const grid = document.getElementById('grid-numeros');
             grid.innerHTML = '';
             
             for (let i = 0; i <= 999; i++) {
                 const numLimpio = String(i).padStart(3, '0');
-                const yaEstaReservado = listaReservados.includes(numLimpio);
+                const yaEstaReservado = LISTA_DE_RESERVADOS.includes(numLimpio);
                 
                 const box = document.createElement('div');
                 box.id = "num-" + numLimpio;
                 box.innerText = numLimpio;
                 
                 if (yaEstaReservado) {
-                    box.classList.add('num-box', 'Reservado');
+                    box.className = 'num-box Reservado';
                 } else {
-                    box.classList.add('num-box', 'Disponible');
+                    box.className = 'num-box Disponible';
                     box.addEventListener('click', () => {
                         if (box.classList.contains('selected')) {
                             box.classList.remove('selected');
@@ -172,5 +136,7 @@
             document.getElementById('btn-enviar').disabled = cant === 0;
         }
 
-
-
+        inicializarTablero();
+    </script>
+</body>
+</html>
