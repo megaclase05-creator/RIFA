@@ -54,12 +54,13 @@
                 <div class="legend-item"><div class="box-sample" style="background: var(--primary);"></div> Seleccionado</div>
                 <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
             </div>
-            <div class="numbers-grid" id="grid-numeros">Sincronizando bloqueos con Google...</div>
+            <div class="numbers-grid" id="grid-numeros">Generando tablero...</div>
         </div>
 
         <div class="promo-card">
             <h3>2. Datos de Registro</h3>
             <br>
+            <!-- Formulario Directo e Inmune a Bloqueos -->
             <form action="https://google.com" method="POST" id="form-rifa">
                 <div class="form-group">
                     <label>Nombre Completo:</label>
@@ -80,26 +81,13 @@
     </div>
 
     <script>
-        const API_URL = "https://google.com";
+        // ========================================================
+        // CONTROL DE NÚMEROS APARTADOS (ESCRIBELOS AQUÍ ADENTRO)
+        // ========================================================
+        // Ejemplo: const LISTA_DE_RESERVADOS = ["005", "024", "150", "999"];
+        const LISTA_DE_RESERVADOS = [];
+
         let seleccionados = [];
-        let listaReservados = [];
-
-        // ESTRATEGIA ANTIBLOQUEO: Llama a Google Sheets usando la técnica segura JSONP
-        function consultarReservadosDesdeSheets() {
-            const scriptElement = document.createElement('script');
-            // Le pedimos a Google que empaquete la respuesta en nuestra función procesarDatos
-            scriptElement.src = API_URL + "?callback=procesarDatos";
-            document.body.appendChild(scriptElement);
-        }
-
-        // Esta función procesa la respuesta segura recibida de tu documento
-        function procesarDatos(resultado) {
-            if (resultado.exito) {
-                listaReservados = resultado.reservados; // Guarda el arreglo de números ya registrados
-            }
-            // Una vez que tenemos la lista real, dibujamos los 1.000 cuadros en pantalla
-            inicializarTablero();
-        }
 
         function inicializarTablero() {
             const grid = document.getElementById('grid-numeros');
@@ -108,18 +96,16 @@
             for (let i = 0; i <= 999; i++) {
                 const numLimpio = String(i).padStart(3, '0');
                 
-                // CONDICIONAL DE CONEXIÓN: Revisa si el número ya existe en tu Google Sheets
-                const yaEstaReservado = listaReservados.includes(numLimpio);
+                // Verifica si el número está en tu lista manual de bloqueos
+                const yaEstaReservado = LISTA_DE_RESERVADOS.includes(numLimpio);
                 
                 const box = document.createElement('div');
                 box.id = "num-" + numLimpio;
                 box.innerText = numLimpio;
                 
                 if (yaEstaReservado) {
-                    // Si ya existe en la hoja, lo pinta de amarillo y bloquea clics
                     box.classList.add('num-box', 'Reservado');
                 } else {
-                    // Si está libre, permite interactuar normalmente
                     box.classList.add('num-box', 'Disponible');
                     box.addEventListener('click', () => {
                         if (box.classList.contains('selected')) {
@@ -152,8 +138,8 @@
             document.getElementById('btn-enviar').disabled = cant === 0;
         }
 
-        // Lanza la sincronización segura al abrir la página web
-        consultarReservadosDesdeSheets();
+        // Dibuja el tablero al cargar la página
+        inicializarTablero();
     </script>
 </body>
 </html>
