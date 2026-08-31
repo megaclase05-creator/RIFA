@@ -37,7 +37,7 @@
             <p>Valor comercial: <strong>$1.100.000 COP</strong></p>
             <div class="info-grid">
                 <div class="info-item">🎟️ Número: $5.000</div>
-                <div class="info-item">🎰 Lotería: XXXX</div>
+                <div class="info-item">🎰 Lotería: SINUANO NOCHE</div>
                 <div class="info-item">📅 Fecha: XXXX</div>
             </div>
             <div class="summary-box" style="border-left-color: var(--success); font-size: 14px;">
@@ -139,11 +139,12 @@
                 numeros: seleccionados
             };
             try {
-                const response = await fetch(WEB_APP_URL, { 
-                    method: 'POST', 
+                await fetch(WEB_APP_URL, { 
+                    method: 'POST',
+                    mode: 'no-cors',
                     body: JSON.stringify(payload) 
                 });
-                alert('¡Reserva exitosa! Nos comunicaremos contigo.');
+                alert('¡Reserva registrada! Revisa tu Google Sheets.'); 
                 window.location.reload();
             } catch (err) { 
                 alert('¡Reserva registrada! Revisa tu Google Sheets.'); 
@@ -155,3 +156,4 @@
     </script>
 </body>
 </html>
+
