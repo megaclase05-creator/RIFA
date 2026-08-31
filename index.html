@@ -83,31 +83,43 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://google.com";
+        // Enlace CSV oficial copiado de tu pantalla
+        const CSV_URL = "https://google.com";
+        const FORM_URL = "https://google.com";
+        
         let seleccionados = [];
 
         async function cargarTablero() {
             try {
-                // Modificado a tipo text() para saltar el bloqueo CORS del servidor de GitHub
-                const response = await fetch(WEB_APP_URL);
-                const textoPlano = await response.text();
-                const res = JSON.parse(textoPlano);
+                const response = await fetch(CSV_URL);
+                const dataText = await response.text();
                 
-                if (res.exito) {
-                    const grid = document.getElementById('grid-numeros');
-                    grid.innerHTML = ''; 
-                    res.datos.forEach(item => {
+                const lineas = dataText.split("\n");
+                const grid = document.getElementById('grid-numeros');
+                grid.innerHTML = '';
+                
+                // Empezamos en i = 1 para saltarnos los encabezados de la fila 1
+                for (let i = 1; i < lineas.length; i++) {
+                    const columnas = lineas[i].split(",");
+                    if (columnas.length >= 2) {
+                        const numLimpio = String(columnas[0]).replace(/"/g, '').trim().padStart(3, '0');
+                        const estadoLimpio = String(columnas[1]).replace(/"/g, '').trim();
+                        
+                        // Validar rango correcto de la rifa (000 a 999)
+                        if (numLimpio === "" || isNaN(numLimpio) || parseInt(numLimpio) > 999) continue;
+                        
                         const box = document.createElement('div');
-                        box.classList.add('num-box', item.e);
-                        box.innerText = item.n;
-                        if (item.e === 'Disponible') {
+                        box.classList.add('num-box', estadoLimpio);
+                        box.innerText = numLimpio;
+                        
+                        if (estadoLimpio === 'Disponible') {
                             box.addEventListener('click', () => {
                                 if (box.classList.contains('selected')) {
                                     box.classList.remove('selected');
-                                    seleccionados = seleccionados.filter(n => n !== item.n);
+                                    seleccionados = seleccionados.filter(n => n !== numLimpio);
                                 } else {
                                     box.classList.add('selected');
-                                    seleccionados.push(item.n);
+                                    seleccionados.push(numLimpio);
                                 }
                                 var cant = seleccionados.length;
                                 var tot = 0;
@@ -124,9 +136,11 @@
                             });
                         }
                         grid.appendChild(box);
-                    });
+                    }
                 }
-            } catch (e) { document.getElementById('grid-numeros').innerText = 'Error de conexión.'; }
+            } catch (e) { 
+                document.getElementById('grid-numeros').innerText = 'Error al enlazar la base de datos.'; 
+            }
         }
 
         document.getElementById('form-rifa').addEventListener('submit', async (e) => {
@@ -142,20 +156,9 @@
                 numeros: seleccionados
             };
             try {
-                await fetch(WEB_APP_URL, { 
+                await fetch(FORM_URL, { 
                     method: 'POST',
                     mode: 'no-cors',
                     body: JSON.stringify(payload) 
                 });
-                alert('¡Reserva registrada con éxito! Revisa tu Google Sheets.'); 
-                window.location.reload();
-            } catch (err) { 
-                alert('¡Reserva registrada con éxito! Revisa tu Google Sheets.'); 
-                window.location.reload();
-            }
-        });
-
-        window.onload = cargarTablero;
-    </script>
-</body>
-</html>
+                alert('¡Reserva registrada con éxito! Verifica tu Google Sheets.'); 
