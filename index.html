@@ -33,7 +33,7 @@
 <body>
     <div class="container">
         <div class="promo-card">
-            <h2>Premio: Aire Acondicionado Portátil</h2>
+            <h2>Premio: Aire Aconditioned Portátil</h2>
             <p>Valor comercial: <strong>$1.100.000 COP</strong></p>
             <div class="info-grid">
                 <div class="info-item">🎟️ Número: $5.000</div>
@@ -97,21 +97,20 @@
                 const grid = document.getElementById('grid-numeros');
                 grid.innerHTML = '';
                 
-                // Empezamos en 1 para saltar la fila de encabezados
                 for (let i = 1; i < lineas.length; i++) {
                     let fila = lineas[i].trim();
                     if (!fila) continue;
                     
-                    // Limpiamos las comillas dobles que mete Google Sheets antes de separar
                     fila = fila.replace(/"/g, '');
-                    const columnas = fila.split(",");
+                    
+                    // MODIFICADO: Soporta tanto comas (,) como puntos y comas (;) de forma segura
+                    const columnas = fila.indexOf(';') !== -1 ? fila.split(';') : fila.split(',');
                     
                     if (columnas.length >= 2) {
-                        const numLimpio = columnas[0].trim().padStart(3, '0');
-                        const estadoLimpio = columnas[1].trim();
+                        const numLimpio = String(columnas[0]).trim().padStart(3, '0');
+                        const estadoLimpio = String(columnas[1]).trim();
                         
-                        // Si el número no es válido o supera 999, saltamos las filas del final de la hoja
-                        if (isNaN(numLimpio) || parseInt(numLimpio) > 999) continue;
+                        if (isNaN(numLimpio) || parseInt(numLimpio) > 999 || numLimpio === "") continue;
                         
                         const box = document.createElement('div');
                         box.classList.add('num-box', estadoLimpio);
@@ -164,3 +163,5 @@
                 await fetch(FORM_URL, { 
                     method: 'POST',
                     mode: 'no-cors',
+                    body: JSON.stringify(payload) 
+                });
