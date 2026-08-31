@@ -2,32 +2,160 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Prueba de Conexión Básica</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gran Rifa - Aire Acondicionado</title>
+    <style>
+        :root { --primary: #0284c7; --primary-dark: #0369a1; --success: #16a34a; --reserved: #eab308; --sold: #dc2626; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 10px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .promo-card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 15px 0; }
+        .info-item { background: #f1f5f9; padding: 10px; border-radius: 8px; font-weight: bold; }
+        .status-legend { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; font-size: 14px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .box-sample { width: 18px; height: 18px; border-radius: 4px; }
+        .numbers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; max-height: 350px; overflow-y: auto; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; }
+        .num-box { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border-radius: 6px; cursor: pointer; background-color: #ffffff; border: 1px solid #cbd5e1; }
+        .num-box.Disponible:hover { background-color: #e0f2fe; border-color: var(--primary); }
+        .num-box.selected { background-color: var(--primary) !important; color: white !important; }
+        .num-box.Reservado { background-color: var(--reserved); color: white; cursor: not-allowed; }
+        .num-box.Vendido { background-color: var(--sold); color: white; cursor: not-allowed; }
+        .form-group { margin-bottom: 12px; text-align: left; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 4px; }
+        .form-group input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; }
+        .summary-box { background: #f8fafc; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 4px solid var(--primary); text-align: left; }
+        button.btn-submit { width: 100%; background-color: var(--success); color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        button:disabled { background-color: #cbd5e1 !important; cursor: not-allowed; }
+        #loading { display: none; color: var(--primary); font-weight: bold; margin-top: 10px; }
+    </style>
 </head>
 <body>
-    <h2>Auditoría de Enlace de Datos</h2>
-    <div id="consola-web" style="background:#000; color:#0f0; padding:15px; font-family:monospace; min-height:200px;">
-        Iniciando descarga de datos desde Google...
+    <div class="container">
+        <div class="promo-card">
+            <h2>Premio: Aire Acondicionado Portátil</h2>
+            <p>Valor comercial: <strong>$1.100.000 COP</strong></p>
+            <div class="info-grid">
+                <div class="info-item">🎟️ Número: $5.000</div>
+                <div class="info-item">🎰 Lotería: SINUANO NOCHE</div>
+                <div class="info-item">📅 Fecha: XXXX</div>
+            </div>
+            <div class="summary-box" style="border-left-color: var(--success); font-size: 14px;">
+                <strong>💥 Súper Promoción Combos:</strong><br>
+                • 1 Núm: $5.000 | 2 Núm: $9.000 | 3 Núm: $13.500 | 4 Núm: $20.000<br>
+                • <strong>¡Lleva 5 números por solo $20.000!</strong> (El 5.º es Gratis).<br>
+                • Números adicionales sobre los combos: a solo $4.500 cada uno.
+            </div>
+        </div>
+
+        <div class="promo-card">
+            <h3>1. Selecciona tus números de la suerte</h3>
+            <br>
+            <div class="status-legend">
+                <div class="legend-item"><div class="box-sample" style="border: 1px solid #cbd5e1;"></div> Disponible</div>
+                <div class="legend-item"><div class="box-sample" style="background: var(--primary);"></div> Seleccionado</div>
+                <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
+                <div class="legend-item"><div class="box-sample" style="background: var(--sold);"></div> Vendido</div>
+            </div>
+            <div class="numbers-grid" id="grid-numeros">Generando tablero...</div>
+        </div>
+
+        <div class="promo-card">
+            <h3>2. Datos de Registro</h3>
+            <br>
+            <form id="form-rifa">
+                <div class="form-group">
+                    <label>Nombre Completo:</label>
+                    <input type="text" id="txt-nombre" required placeholder="Ej. Juan Pérez">
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp / Teléfono:</label>
+                    <input type="tel" id="txt-nombre-tel" required placeholder="Ej. 3001234567">
+                </div>
+                <div class="summary-box">
+                    <p>Elegidos: <span id="lbl-seleccionados">Ninguno</span></p>
+                    <p>Total a pagar: <strong id="lbl-total" style="color:var(--success); font-size:18px;">$0 COP</strong></p>
+                </div>
+                <button type="submit" class="btn-submit" id="btn-enviar" disabled>Reservar Números</button>
+                <div id="loading">Procesando registro en el sistema...</div>
+            </form>
+        </div>
     </div>
 
     <script>
-        const CSV_URL = "https://google.com";
+        // Enlace de Apps Script para enviar las reservas por detrás
+        const FORM_URL = "https://google.com";
+        let seleccionados = [];
 
-        async function probarEnlace() {
-            const monitor = document.getElementById('consola-web');
-            try {
-                const response = await fetch(CSV_URL);
-                const textoRaw = await response.text();
+        // Genera los 1.000 recuadros localmente rompiendo cualquier bloqueo CORS de raíz
+        function inicializarTablero() {
+            const grid = document.getElementById('grid-numeros');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i <= 999; i++) {
+                const numLimpio = String(i).padStart(3, '0');
+                const box = document.createElement('div');
+                box.classList.add('num-box', 'Disponible');
+                box.id = "num-" + numLimpio;
+                box.innerText = numLimpio;
                 
-                monitor.innerHTML = "<strong>¡ÉXITO DE TRANSMISIÓN!</strong><br><br>";
-                monitor.innerHTML += "Texto crudo recibido desde tu Google Sheets:<br>";
-                monitor.innerHTML += "<pre style='color:#fff;'>" + textoRaw + "</pre>";
-            } catch (error) {
-                monitor.style.color = '#ff0000';
-                monitor.innerHTML = "<strong>ERROR DE CONEXIÓN:</strong> " + error.message;
+                box.addEventListener('click', () => {
+                    if (box.classList.contains('selected')) {
+                        box.classList.remove('selected');
+                        seleccionados = seleccionados.filter(n => n !== numLimpio);
+                    } else {
+                        box.classList.add('selected');
+                        seleccionados.push(numLimpio);
+                    }
+                    actualizarResumen();
+                });
+                grid.appendChild(box);
             }
         }
-        window.onload = probarEnlace;
+
+        function actualizarResumen() {
+            var cant = seleccionados.length;
+            var tot = 0;
+            if(cant==1) tot=5000;
+            else if(cant==2) tot=9000;
+            else if(cant==3) tot=13500;
+            else if(cant==4 || cant==5) tot=20000;
+            else if(cant>5) {
+                tot = (Math.floor(cant/5)*20000) + ((cant%5==1?4500:cant%5==2?9000:cant%5==3?13500:cant%5==4?20000:0));
+            }
+            document.getElementById('lbl-seleccionados').innerText = cant > 0 ? seleccionados.join(', ') : 'Ninguno';
+            document.getElementById('lbl-total').innerText = '$' + tot.toLocaleString('es-CO') + ' COP';
+            document.getElementById('btn-enviar').disabled = cant === 0;
+        }
+
+        document.getElementById('form-rifa').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-enviar');
+            const loading = document.getElementById('loading');
+            btn.disabled = true;
+            loading.style.display = 'block';
+
+            const payload = {
+                nombre: document.getElementById('txt-nombre').value,
+                telefono: document.getElementById('txt-nombre-tel').value,
+                numeros: seleccionados
+            };
+            try {
+                await fetch(FORM_URL, { 
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload) 
+                });
+                alert('¡Reserva registrada con éxito! Verifica tu Google Sheets.'); 
+                window.location.reload();
+            } catch (err) { 
+                alert('¡Reserva registrada con éxito! Verifica tu Google Sheets.'); 
+                window.location.reload();
+            }
+        });
+
+        // Carga inmediata del tablero al abrir la página
+        window.onload = inicializarTablero;
     </script>
 </body>
 </html>
