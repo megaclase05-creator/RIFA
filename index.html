@@ -57,7 +57,7 @@
                 <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
                 <div class="legend-item"><div class="box-sample" style="background: var(--sold);"></div> Vendido</div>
             </div>
-            <div class="numbers-grid" id="grid-numeros">Cargando tablero...</div>
+            <div class="numbers-grid" id="grid-numeros">Conectando con Google Sheets...</div>
         </div>
 
         <div class="promo-card">
@@ -77,22 +77,22 @@
                     <p>Total a pagar: <strong id="lbl-total" style="color:var(--success); font-size:18px;">$0 COP</strong></p>
                 </div>
                 <button type="submit" class="btn-submit" id="btn-enviar" disabled>Reservar Números</button>
-                <div id="loading">Procesando registro en el sistema...</div>
+                <div id="loading">Registrando números en la base de datos...</div>
             </form>
         </div>
     </div>
 
     <script>
-        // URL de tu Google Apps Script ya integrada
-        const API_URL = "https://script.google.com/macros/s/AKfycbw0qclghqDgXylv7PiMaCxMOX2_0qljo10HQavJK75p3UH4cGIXt2MjCqmgne5afPO8/exec";
+        // Enlace directo a tu Google Apps Script de la hoja RIFA
+        const API_URL = "https://script.google.com/macros/s/AKfycbxKcxt9eq2LX31FVZGBP4lpO4s3xFN0tlomwQaqgzTjPqaeqao2QLltnl501IQIMmFd/exec";
         
         let seleccionados = [];
         let estadosNumeros = {}; 
 
-        // Consulta los estados de los números directamente desde Google Sheets (doGet)
+        // 1. Lee las filas reales del documento para sincronizar los números
         async function cargarTableroDesdeSheets() {
             const grid = document.getElementById('grid-numeros');
-            grid.innerHTML = 'Sincronizando números con el servidor...';
+            grid.innerHTML = 'Sincronizando números con Google Sheets...';
             
             try {
                 const response = await fetch(API_URL);
@@ -101,35 +101,36 @@
                 if (resultado.exito) {
                     grid.innerHTML = '';
                     resultado.datos.forEach(item => {
-                        estadosNumeros[item.n] = item.e;
+                        estadosNumeros[item.n] = item.e; // item.n = número de fila, item.e = Estado en celda
                     });
-                    generarTableroDOM();
+                    generarTableroRealDOM();
                 } else {
-                    grid.innerHTML = 'Error de base de datos: ' + resultado.mensaje;
+                    grid.innerHTML = 'Error en la base de datos: ' + resultado.mensaje;
                 }
             } catch (error) {
-                console.error("Error conectando con la API:", error);
-                grid.innerHTML = 'Error de comunicación. Cargando sistema local temporal...';
+                console.error("Error al leer base de datos:", error);
+                grid.innerHTML = 'Error de comunicación. Cargando modo local de respaldo...';
                 for(let i=0; i<=999; i++) estadosNumeros[String(i).padStart(3, '0')] = 'Disponible';
-                generarTableroDOM();
+                generarTableroRealDOM();
             }
         }
 
-        // Renderiza visualmente los 1000 números mapeando su estado de color
-        function generarTableroDOM() {
+        // 2. Vincula el diseño visual con los estados de las celdas
+        function generarTableroRealDOM() {
             const grid = document.getElementById('grid-numeros');
             grid.innerHTML = '';
             
             for (let i = 0; i <= 999; i++) {
                 const numLimpio = String(i).padStart(3, '0');
-                const estado = estadosNumeros[numLimpio] || 'Disponible';
+                const estadoEnSheets = estadosNumeros[numLimpio] || 'Disponible';
                 
                 const box = document.createElement('div');
-                box.classList.add('num-box', estado);
+                box.classList.add('num-box', estadoEnSheets);
                 box.id = "num-" + numLimpio;
                 box.innerText = numLimpio;
                 
-                if (estado === 'Disponible') {
+                // Los clics se habilitan ÚNICAMENTE si la celda de la hoja dice "Disponible"
+                if (estadoEnSheets === 'Disponible') {
                     box.addEventListener('click', () => {
                         if (box.classList.contains('selected')) {
                             box.classList.remove('selected');
@@ -160,10 +161,10 @@
             document.getElementById('btn-enviar').disabled = cant === 0;
         }
 
-        // Inicia el proceso de carga al abrir la web
+        // Inicializa la consulta al abrir la web
         cargarTableroDesdeSheets();
 
-        // Procesa el envío seguro de la información mediante POST
+        // 3. Envía los números seleccionados directamente a las hojas correspondientes
         document.getElementById('form-rifa').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-enviar');
@@ -174,9 +175,5 @@
 
             const payload = {
                 nombre: document.getElementById('txt-nombre').value,
-                telefono: document.getElementById('txt-nombre-tel').value,
-                numeros: seleccionados
-            };
 
-            try {
 
