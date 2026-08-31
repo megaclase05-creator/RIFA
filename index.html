@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gran Rifa - Aire Acondicionado</title>
+    <title>Gran Rifa - Consulta de Números</title>
     <style>
-        :root { --primary: #0284c7; --primary-dark: #0369a1; --success: #16a34a; --reserved: #eab308; --sold: #dc2626; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; }
+        :root { --primary: #0284c7; --success: #16a34a; --reserved: #eab308; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body { background-color: var(--bg); color: var(--text); padding: 10px; }
         .container { max-width: 800px; margin: 0 auto; }
@@ -15,17 +15,11 @@
         .status-legend { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; font-size: 14px; }
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .box-sample { width: 18px; height: 18px; border-radius: 4px; }
-        .numbers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; max-height: 350px; overflow-y: auto; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; }
-        .num-box { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border-radius: 6px; cursor: pointer; background-color: #ffffff; border: 1px solid #cbd5e1; }
-        .num-box.Disponible:hover { background-color: #e0f2fe; border-color: var(--primary); }
-        .num-box.selected { background-color: var(--primary) !important; color: white !important; }
-        .num-box.Reservado { background-color: var(--reserved) !important; color: white !important; cursor: not-allowed; }
-        .form-group { margin-bottom: 12px; text-align: left; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 4px; }
-        .form-group input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; }
-        .summary-box { background: #f8fafc; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 4px solid var(--primary); text-align: left; }
-        input[type="submit"] { width: 100%; background-color: var(--success); color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; }
-        input[type="submit"]:disabled { background-color: #cbd5e1 !important; cursor: not-allowed; }
+        .numbers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; max-height: 450px; overflow-y: auto; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; }
+        .num-box { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border-radius: 6px; background-color: #ffffff; border: 1px solid #cbd5e1; }
+        .num-box.Reservado { background-color: var(--reserved) !important; color: white !important; }
+        .num-box.Disponible { color: var(--text); }
+        .summary-box { background: #f8fafc; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 4px solid var(--success); text-align: left; }
     </style>
 </head>
 <body>
@@ -35,134 +29,56 @@
             <p>Valor comercial: <strong>$1.100.000 COP</strong></p>
             <div class="info-grid">
                 <div class="info-item">🎟️ Número: $5.000</div>
-                <div class="info-item">🎰 Lotería: NE</div>
+                <div class="info-item">🎰 Lotería: NOCHE</div>
                 <div class="info-item">📅 Fecha: XXXX</div>
             </div>
-            <div class="summary-box" style="border-left-color: var(--success); font-size: 14px;">
+            <div class="summary-box">
                 <strong>💥 Súper Promoción Combos:</strong><br>
                 • 1 Núm: $5.000 | 2 Núm: $9.000 | 3 Núm: $13.500 | 4 Núm: $20.000<br>
-                • <strong>¡Lleva 5 números por solo $20.000!</strong> (El 5.º es Gratis).<br>
-                • Números adicionales sobre los combos: a solo $4.500 cada uno.
+                • <strong>¡Lleva 5 números por solo $20.000!</strong> (El 5.º es Gratis).
             </div>
         </div>
 
         <div class="promo-card">
-            <h3>1. Selecciona tus números de la suerte</h3>
-            <br>
+            <h3>📌 Tablero de Números Disponibles</h3>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Consulta los números antes de solicitar tu reserva por WhatsApp.</p>
             <div class="status-legend">
                 <div class="legend-item"><div class="box-sample" style="border: 1px solid #cbd5e1;"></div> Disponible</div>
-                <div class="legend-item"><div class="box-sample" style="background: var(--primary);"></div> Seleccionado</div>
-                <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
+                <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado / Pagado</div>
             </div>
-            <div class="numbers-grid" id="grid-numeros">Cargando casillas del sorteo...</div>
-        </div>
-
-        <div class="promo-card">
-            <h3>2. Datos de Registro</h3>
-            <br>
-            <form action="https://google.com" method="POST" id="form-rifa">
-                <div class="form-group">
-                    <label>Nombre Completo:</label>
-                    <input type="text" name="nombreCliente" required placeholder="Ej. Juan Pérez">
-                </div>
-                <div class="form-group">
-                    <label>WhatsApp / Teléfono:</label>
-                    <input type="tel" name="telefonoCliente" required placeholder="Ej. 3001234567">
-                </div>
-                <input type="hidden" name="numerosSeleccionados" id="txt-oculto-numeros" value="">
-                <div class="summary-box">
-                    <p>Elegidos: <span id="lbl-seleccionados">Ninguno</span></p>
-                    <p>Total a pagar: <strong id="lbl-total" style="color:var(--success); font-size:18px;">$0 COP</strong></p>
-                </div>
-                <input type="submit" id="btn-enviar" value="Reservar Números" disabled>
-            </form>
-        </div>
-
-        <!-- LLAVE MAESTRA: PANEL DE CONTROL DE BLOQUEO MANUAL -->
-        <div class="promo-card" style="border: 2px dashed var(--reserved); background: #fffbeb;">
-            <h4 style="color: #b45309;">⚙️ Panel Administrativo de Bloqueo</h4>
-            <p style="font-size: 13px; color: #78350f; margin-bottom: 10px;">
-                Pega aquí los números reservados separados por comas para pintarlos de amarillo y bloquearlos:
-            </p>
-            <input type="text" id="campo-bloqueo-manual" placeholder="Ej: 005, 010, 520" style="width: 100%; padding: 8px; border: 1px solid var(--reserved); border-radius: 6px;" oninput="actualizarBloqueosDesdeTexto()">
+            <div class="numbers-grid" id="grid-numeros">Sincronizando disponibilidad con la base de datos...</div>
         </div>
     </div>
 
     <script>
-        let seleccionados = [];
+        const API_URL = "https://google.com";
         let listaReservados = [];
+
+        function consultarReservadosDesdeSheets() {
+            const scriptElement = document.createElement('script');
+            scriptElement.src = API_URL + "?callback=procesarDatos";
+            document.body.appendChild(scriptElement);
+        }
+
+        function procesarDatos(resultado) {
+            if (resultado.exito) { listaReservados = resultado.reservados; }
+            inicializarTablero();
+        }
 
         function inicializarTablero() {
             const grid = document.getElementById('grid-numeros');
             grid.innerHTML = '';
-            
             for (let i = 0; i <= 999; i++) {
                 const numLimpio = String(i).padStart(3, '0');
                 const yaEstaReservado = listaReservados.includes(numLimpio);
-                
                 const box = document.createElement('div');
-                box.id = "num-" + numLimpio;
                 box.innerText = numLimpio;
-                
-                if (yaEstaReservado) {
-                    box.className = 'num-box Reservado';
-                } else {
-                    box.className = 'num-box Disponible';
-                    // Conservamos la condicional de selección visual para los libres
-                    if (seleccionados.includes(numLimpio)) {
-                        box.classList.add('selected');
-                    }
-                    
-                    box.addEventListener('click', () => {
-                        if (box.classList.contains('selected')) {
-                            box.classList.remove('selected');
-                            seleccionados = seleccionados.filter(n => n !== numLimpio);
-                        } else {
-                            box.classList.add('selected');
-                            seleccionados.push(numLimpio);
-                        }
-                        actualizarResumen();
-                    });
-                }
+                box.className = yaEstaReservado ? 'num-box Reservado' : 'num-box Disponible';
                 grid.appendChild(box);
             }
         }
 
-        // Procesa el texto del Panel Administrativo para bloquear números en caliente
-        function actualizarBloqueosDesdeTexto() {
-            const texto = document.getElementById('campo-bloqueo-manual').value;
-            
-            // Convertimos la entrada de texto en una lista limpia de strings de 3 dígitos
-            listaReservados = texto.split(',')
-                                   .map(num => num.trim().padStart(3, '0'))
-                                   .filter(num => num.length === 3 && !isNaN(num));
-            
-            // Quitamos de la selección actual cualquier número que se acabe de bloquear
-            seleccionados = seleccionados.filter(n => !listaReservados.includes(n));
-            
-            // Volvemos a dibujar el tablero aplicando los nuevos cambios visuales
-            inicializarTablero();
-            actualizarResumen();
-        }
-
-        function actualizarResumen() {
-            var cant = seleccionados.length;
-            var tot = 0;
-            if(cant==1) tot=5000;
-            else if(cant==2) tot=9000;
-            else if(cant==3) tot=13500;
-            else if(cant==4 || cant==5) tot=20000;
-            else if(cant>5) {
-                tot = (Math.floor(cant/5)*20000) + ((cant%5==1?4500:cant%5==2?9000:cant%5==3?13500:cant%5==4?20000:0));
-            }
-            document.getElementById('txt-oculto-numeros').value = seleccionados.join(', ');
-            document.getElementById('lbl-seleccionados').innerText = cant > 0 ? seleccionados.join(', ') : 'Ninguno';
-            document.getElementById('lbl-total').innerText = '$' + tot.toLocaleString('es-CO') + ' COP';
-            document.getElementById('btn-enviar').disabled = cant === 0;
-        }
-
-        // Genera el tablero inicial libre por defecto
-        inicializarTablero();
+        consultarReservadosDesdeSheets();
     </script>
 </body>
 </html>
