@@ -57,7 +57,7 @@
                 <div class="legend-item"><div class="box-sample" style="background: var(--reserved);"></div> Reservado</div>
                 <div class="legend-item"><div class="box-sample" style="background: var(--sold);"></div> Vendido</div>
             </div>
-            <div class="numbers-grid" id="grid-numeros">Generando tablero...</div>
+            <div class="numbers-grid" id="grid-numeros">Cargando tablero...</div>
         </div>
 
         <div class="promo-card">
@@ -83,32 +83,64 @@
     </div>
 
     <script>
-        // Enlace de Apps Script para enviar las reservas por detrás
-        const FORM_URL = "https://google.com";
+        // URL de tu Google Apps Script ya integrada
+        const API_URL = "https://script.google.com/macros/s/AKfycbw0qclghqDgXylv7PiMaCxMOX2_0qljo10HQavJK75p3UH4cGIXt2MjCqmgne5afPO8/exec";
+        
         let seleccionados = [];
+        let estadosNumeros = {}; 
 
-        // Genera los 1.000 recuadros localmente rompiendo cualquier bloqueo CORS de raíz
-        function inicializarTablero() {
+        // Consulta los estados de los números directamente desde Google Sheets (doGet)
+        async function cargarTableroDesdeSheets() {
+            const grid = document.getElementById('grid-numeros');
+            grid.innerHTML = 'Sincronizando números con el servidor...';
+            
+            try {
+                const response = await fetch(API_URL);
+                const resultado = await response.json();
+                
+                if (resultado.exito) {
+                    grid.innerHTML = '';
+                    resultado.datos.forEach(item => {
+                        estadosNumeros[item.n] = item.e;
+                    });
+                    generarTableroDOM();
+                } else {
+                    grid.innerHTML = 'Error de base de datos: ' + resultado.mensaje;
+                }
+            } catch (error) {
+                console.error("Error conectando con la API:", error);
+                grid.innerHTML = 'Error de comunicación. Cargando sistema local temporal...';
+                for(let i=0; i<=999; i++) estadosNumeros[String(i).padStart(3, '0')] = 'Disponible';
+                generarTableroDOM();
+            }
+        }
+
+        // Renderiza visualmente los 1000 números mapeando su estado de color
+        function generarTableroDOM() {
             const grid = document.getElementById('grid-numeros');
             grid.innerHTML = '';
             
             for (let i = 0; i <= 999; i++) {
                 const numLimpio = String(i).padStart(3, '0');
+                const estado = estadosNumeros[numLimpio] || 'Disponible';
+                
                 const box = document.createElement('div');
-                box.classList.add('num-box', 'Disponible');
+                box.classList.add('num-box', estado);
                 box.id = "num-" + numLimpio;
                 box.innerText = numLimpio;
                 
-                box.addEventListener('click', () => {
-                    if (box.classList.contains('selected')) {
-                        box.classList.remove('selected');
-                        seleccionados = seleccionados.filter(n => n !== numLimpio);
-                    } else {
-                        box.classList.add('selected');
-                        seleccionados.push(numLimpio);
-                    }
-                    actualizarResumen();
-                });
+                if (estado === 'Disponible') {
+                    box.addEventListener('click', () => {
+                        if (box.classList.contains('selected')) {
+                            box.classList.remove('selected');
+                            seleccionados = seleccionados.filter(n => n !== numLimpio);
+                        } else {
+                            box.classList.add('selected');
+                            seleccionados.push(numLimpio);
+                        }
+                        actualizarResumen();
+                    });
+                }
                 grid.appendChild(box);
             }
         }
@@ -128,10 +160,15 @@
             document.getElementById('btn-enviar').disabled = cant === 0;
         }
 
+        // Inicia el proceso de carga al abrir la web
+        cargarTableroDesdeSheets();
+
+        // Procesa el envío seguro de la información mediante POST
         document.getElementById('form-rifa').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-enviar');
             const loading = document.getElementById('loading');
+            
             btn.disabled = true;
             loading.style.display = 'block';
 
@@ -140,22 +177,6 @@
                 telefono: document.getElementById('txt-nombre-tel').value,
                 numeros: seleccionados
             };
-            try {
-                await fetch(FORM_URL, { 
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(payload) 
-                });
-                alert('¡Reserva registrada con éxito! Verifica tu Google Sheets.'); 
-                window.location.reload();
-            } catch (err) { 
-                alert('¡Reserva registrada con éxito! Verifica tu Google Sheets.'); 
-                window.location.reload();
-            }
-        });
 
-        // Carga inmediata del tablero al abrir la página
-        window.onload = inicializarTablero;
-    </script>
-</body>
-</html>
+            try {
+
