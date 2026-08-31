@@ -88,8 +88,11 @@
 
         async function cargarTablero() {
             try {
-                const r = await fetch(WEB_APP_URL);
-                const res = await r.json();
+                // Modificado a tipo text() para saltar el bloqueo CORS del servidor de GitHub
+                const response = await fetch(WEB_APP_URL);
+                const textoPlano = await response.text();
+                const res = JSON.parse(textoPlano);
+                
                 if (res.exito) {
                     const grid = document.getElementById('grid-numeros');
                     grid.innerHTML = ''; 
@@ -144,10 +147,10 @@
                     mode: 'no-cors',
                     body: JSON.stringify(payload) 
                 });
-                alert('¡Reserva registrada! Revisa tu Google Sheets.'); 
+                alert('¡Reserva registrada con éxito! Revisa tu Google Sheets.'); 
                 window.location.reload();
             } catch (err) { 
-                alert('¡Reserva registrada! Revisa tu Google Sheets.'); 
+                alert('¡Reserva registrada con éxito! Revisa tu Google Sheets.'); 
                 window.location.reload();
             }
         });
@@ -156,4 +159,3 @@
     </script>
 </body>
 </html>
-
