@@ -2,64 +2,30 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Prueba de Conexión Rápida</title>
+    <title>Prueba de Conexión Forzada</title>
     <style>
         body { font-family: sans-serif; padding: 30px; text-align: center; background: #f0f4f8; }
         .box { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         input { width: 90%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-        button { background: #16a34a; color: white; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 95%; }
+        input[type="submit"] { background: #1d4ed8; color: white; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 95%; }
     </style>
 </head>
 <body>
 
     <div class="box">
-        <h2>Prueba de Envío Directo</h2>
-        <p>Escribe algo aquí abajo para ver si llega a tu Google Sheets:</p>
+        <h2>Prueba de Conexión Directa</h2>
+        <p>Este método salta los bloqueos de red del navegador.</p>
         
-        <input type="text" id="campo-prueba" placeholder="Ej. ¡Hola Google Sheets!">
-        <button id="btn-probar">Enviar Texto de Prueba</button>
-        
-        <p id="respuesta" style="margin-top: 15px; font-weight: bold; color: #0284c7;"></p>
+        <!-- El formulario apunta directo a tu nueva URL de Apps Script -->
+        <form action="https://script.google.com/macros/s/AKfycbw2Wg1EudZJIimqYKGysWUjbYwWzfhm-e7bsZLFZe5OIYk8qglGTSg3Rv2k3ZrbhJbl/exec" method="POST">
+            <input type="text" name="textoPrueba" placeholder="Escribe un mensaje aquí" required>
+            <input type="submit" value="Forzar Envío a Google Sheets">
+        </form>
     </div>
 
-    <script>
-        const API_URL = "https://google.com";
-
-        document.getElementById('btn-probar').addEventListener('click', async () => {
-            const elTexto = document.getElementById('campo-prueba').value;
-            const statusTxt = document.getElementById('respuesta');
-            
-            if(!elTexto) { alert('Escribe algo primero'); return; }
-            
-            statusTxt.innerText = "Enviando...";
-
-            try {
-                // Enviamos el texto directamente sin estructuras complejas
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    body: elTexto
-                });
-
-                const resultado = await response.json();
-                
-                if(resultado.exito) {
-                    statusTxt.style.color = "green";
-                    statusTxt.innerText = resultado.mensaje;
-                } else {
-                    statusTxt.style.color = "red";
-                    statusTxt.innerText = "Error en Google: " + resultado.mensaje;
-                }
-            } catch (error) {
-                console.error(error);
-                // Si da un falso bloqueo de CORS pero igual viaja, lo sabremos abriendo el documento
-                statusTxt.style.color = "orange";
-                statusTxt.innerText = "Petición lanzada. ¡Revisa tu Google Sheets ahora mismo!";
-            }
-        });
-    </script>
 </body>
 </html>
+
 
 
 
